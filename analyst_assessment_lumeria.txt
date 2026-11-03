@@ -1,0 +1,11 @@
+Political risk assessment: Tarvos export licensing and Lumeria Drives S.p.A.
+
+Risk question: How will the export licensing regime introduced by the Republic of Tarvos for tarvonite affect the profitability of Lumeria Drives, an Italian manufacturer of electric motors for industrial automation, over the next three years?
+
+1. Initial event. From 1 January 2027 the Republic of Tarvos requires an individual export licence for tarvonite concentrate and tarvonite-derived magnet alloys. This is a political and regulatory development.
+
+2. Direct economic effect. The licensing requirement adds administrative cost and reduces the supply of tarvonite magnet alloy available to European buyers. Reduced supply pushes up the purchase price of magnet alloy. Higher magnet prices raise Lumeria's production costs, because magnets are the largest single component of its motors.
+
+3. Profit effect. Higher production costs compress Lumeria's gross margin. Lumeria can pass part of the cost on to customers, but competitive pressure limits price increases to roughly half of the cost increase.
+
+4. Recommendation. Negotiate fixed-price contracts with magnet suppliers where possible, and raise list prices by 4 to 6 percent in 2027.

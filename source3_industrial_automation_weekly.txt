@@ -1,0 +1,11 @@
+FICTIONAL TEST DOCUMENT - invented for software testing. Not real events, people or data.
+
+Industrial Automation Weekly - Delivery delays now carry penalties (October 2026)
+
+Large automation customers increasingly include late-delivery penalty clauses in supply contracts. A typical clause charges 0.5 percent of order value for each week of delay, capped at 10 percent of the order value.
+
+Several original equipment manufacturers told the magazine that they will favour suppliers who can guarantee delivery windows over suppliers who offer the lowest price.
+
+Customers in the European Union also face new due diligence reporting obligations that require them to document the origin of critical raw materials. Suppliers that cannot provide origin data for their components risk being excluded from public and large private tenders.
+
+Mining regulators in Tarvos have announced stricter environmental permits for new tarvonite extraction sites. Analysts expect the new permits to limit growth in new supply through 2030.
