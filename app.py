@@ -5,11 +5,21 @@ Run with:  streamlit run app.py
 from __future__ import annotations
 
 import html
+import os
 import re
 import uuid
 
 import streamlit as st
 import streamlit.components.v1 as components
+
+# On Streamlit Community Cloud, secrets are exposed via st.secrets, not the
+# process environment. Copy the key across once so political_domino.config
+# (which reads os.environ) sees it the same way it would locally.
+if not os.environ.get("ANTHROPIC_API_KEY"):
+    try:
+        os.environ["ANTHROPIC_API_KEY"] = st.secrets["ANTHROPIC_API_KEY"]
+    except Exception:
+        pass
 
 from political_domino import analysis, config, export, extraction, graph, llm, retrieval, storage, styles
 
@@ -41,8 +51,8 @@ def get_assessment() -> dict | None:
     return storage.load(aid) if aid else None
 
 
-def make_client() -> llm.OllamaClient:
-    return llm.OllamaClient(
+def make_client() -> llm.AnthropicClient:
+    return llm.AnthropicClient(
         model=st.session_state.get("model_pick") or config.DEFAULT_MODEL,
         num_ctx=int(st.session_state.get("num_ctx", config.DEFAULT_NUM_CTX)),
     )
@@ -80,36 +90,28 @@ def sidebar() -> str:
             st.caption(f"Open: **{a['name']}** · {a['company']}")
 
         st.markdown("---")
-        st.markdown("**Local model (Ollama)**")
-        status = llm.OllamaClient().server_status()
+        st.markdown("**AI model (Claude API)**")
+        status = llm.AnthropicClient().server_status()
         if status.reachable:
-            st.markdown('<span class="pd-ok">● Ollama is running</span>', unsafe_allow_html=True)
-            if status.models:
-                if st.session_state.get("model_pick") not in status.models:
-                    st.session_state.pop("model_pick", None)
-                default = next(
-                    (m for m in status.models if m == config.DEFAULT_MODEL or m == config.DEFAULT_MODEL + ":latest"),
-                    status.models[0],
-                )
-                st.selectbox("Model", status.models, index=status.models.index(default), key="model_pick")
-                if not any(m.startswith(config.DEFAULT_MODEL.split(":")[0]) for m in status.models):
-                    st.caption(f"Recommended: `ollama pull {config.DEFAULT_MODEL}`")
-            else:
-                st.warning(f"No models installed. Run `ollama pull {config.DEFAULT_MODEL}` in a terminal.")
+            st.markdown('<span class="pd-ok">● API key configured</span>', unsafe_allow_html=True)
+            st.selectbox(
+                "Model", list(config.ANTHROPIC_MODELS), index=list(config.ANTHROPIC_MODELS).index(config.DEFAULT_MODEL),
+                format_func=lambda m: config.ANTHROPIC_MODELS[m], key="model_pick",
+            )
         else:
-            st.markdown('<span class="pd-bad">● Ollama is not reachable</span>', unsafe_allow_html=True)
+            st.markdown('<span class="pd-bad">● No API key configured</span>', unsafe_allow_html=True)
             st.caption(
-                "Install Ollama from ollama.com and start it. Everything except the AI analysis "
-                "still works without it."
+                "The person running this app needs to set the ANTHROPIC_API_KEY secret (see the "
+                "README). Everything except the AI analysis still works without it."
             )
         with st.expander("Advanced"):
             st.selectbox(
-                "Context window (tokens)",
+                "Evidence budget (tokens of source text sent per request)",
                 config.NUM_CTX_OPTIONS,
                 index=config.NUM_CTX_OPTIONS.index(config.DEFAULT_NUM_CTX),
                 key="num_ctx",
-                help="Larger windows let the model read more source passages but need more RAM "
-                "and are slower. Use 8192 on small machines.",
+                help="Larger budgets let the model read more source passages per request, but "
+                "cost more and are slower. Lower it to keep each analysis cheap.",
             )
         st.caption(config.DISCLAIMER)
     return choice
@@ -439,7 +441,7 @@ def render_suggestion(a: dict, s: dict) -> None:
                       on_change=save_note, args=(sid,))
 
 
-def run_analysis(a: dict, client: llm.OllamaClient) -> None:
+def run_analysis(a: dict, client: llm.AnthropicClient) -> None:
     bar = st.progress(0.0, text="Starting…")
 
     def on_progress(stage: str, fraction: float, detail: str = "") -> None:
@@ -492,11 +494,10 @@ def page_gaps(a: dict) -> None:
     status = client.server_status()
     if not status.reachable:
         st.error(
-            f"Ollama is not reachable at {client.host}. Install it from https://ollama.com and start it, "
-            "then reload this page. No analysis can run without it, and no placeholder results are shown."
+            "No Anthropic API key is configured for this app. The person running it needs to set "
+            "the ANTHROPIC_API_KEY secret (see the README). No analysis can run without it, and "
+            "no placeholder results are shown."
         )
-    elif not llm.model_installed(client.model, status.models):
-        st.error(f"The model **{client.model}** is not installed. Run `ollama pull {client.model}` in a terminal.")
 
     if st.button("Analyze Potential Gaps", type="primary", disabled=bool(problems) or not status.reachable):
         run_analysis(a, client)
@@ -521,7 +522,7 @@ def page_gaps(a: dict) -> None:
 
     with st.expander("About this run: passages used, limitations, discarded items"):
         st.markdown(
-            f"Model **{esc(run['model'])}**, context {run['num_ctx']:,} tokens, {run['duration_s']} s. "
+            f"Model **{esc(run['model'])}**, evidence budget {run['num_ctx']:,} tokens, {run['duration_s']} s. "
             f"{len(run['passages_used'])} of {run['n_chunks_total']} source passages were given to the model.",
             unsafe_allow_html=True,
         )
